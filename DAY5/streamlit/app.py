@@ -39,3 +39,5 @@ if prompt := st.chat_input("User : "):
             placeholder.markdown(response_text)
 
     st.session_state["messages"].append({"role":"assistant", "content": response_text})
+
+#python -m streamlit run app.py    
