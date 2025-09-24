@@ -38,5 +38,6 @@
         ".vscode{,/**}"
     ],
     "appService.defaultWebAppToDeploy": "/subscriptions/dc6618c1-53d2-4bc8-ab82-68140c3fbde1/resourceGroups/ktds6_16/providers/Microsoft.Web/sites/streamlit-myapp616",
-    "appService.deploySubpath": "streamlit"
+    "appService.deploySubpath": "ktds-msai-6th-mvp",
+    "appService.showBuildDuringDeployPrompt": false
 }
