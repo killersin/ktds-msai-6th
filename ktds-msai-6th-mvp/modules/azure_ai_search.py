@@ -2,11 +2,11 @@
 Azure AI Search 모듈
 RAG 파이프라인을 위한 벡터 검색 및 문서 인덱싱 담당
 
-이 모듈은:
+이 모듈 기능:
 - Azure Search 인덱스(예: compliance-9fields) 생성
 - 로컬 JSON 파일(`/data/9_field.json` 또는 대체 경로)의 항목을 인덱스에 업로드
 
-환경 변수:
+필요 환경변수:
 - AZURE_SEARCH_ENDPOINT
 - AZURE_SEARCH_KEY
 """
@@ -39,18 +39,19 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
+
 class AzureSearchClient:
 	"""Azure AI Search와 통신하는 간단한 클라이언트
 
-	주목:
-	- 이 모듈은 입력 JSON 구조가 두 가지 형태 중 하나일 것으로 가정합니다:
+	참고:
+	- 입력 JSON 형식은 두 가지 중 하나를 지원합니다:
 	  1) 리스트 형태: [{"category_no":1, "category":"부패방지", "content":"..."}, ...]
 	  2) dict 형태: {"01_부패방지": ["내용1", "내용2", ...], ...}
-	- 기본적으로 벡터 임베딩을 자동으로 생성하지 않습니다(필요 시 추후 확장 가능).
+	- 현재 이 모듈은 자동으로 임베딩을 생성하지 않습니다. 임베딩이 필요할 경우 환경변수를 통해 활성화됩니다.
 	"""
 
 	def __init__(self):
-		self.endpoint = os.getenv("AZURE_SEARCH_ENDPOINT") # Azure Search 엔드포인트
+		self.endpoint = os.getenv("AZURE_SEARCH_ENDPOINT")  # Azure Search 엔드포인트
 		# 키 환경변수명 호환성: AZURE_SEARCH_KEY 또는 AZURE_SEARCH_API_KEY
 		self.key = os.getenv("AZURE_SEARCH_KEY") or os.getenv("AZURE_SEARCH_API_KEY")
 		# 인덱스 이름 환경변수도 여러명 지원
@@ -95,6 +96,7 @@ class AzureSearchClient:
 				SimpleField(name="id", type=SearchFieldDataType.String, key=True),
 				SimpleField(name="category_no", type=SearchFieldDataType.Int32, filterable=True, sortable=True),
 				SimpleField(name="category", type=SearchFieldDataType.String, filterable=True),
+				SimpleField(name="domain", type=SearchFieldDataType.String, filterable=True),
 				SearchableField(name="content", type=SearchFieldDataType.String, analyzer_name=None),
 				SimpleField(name="source", type=SearchFieldDataType.String, filterable=True, facetable=False),
 				SimpleField(name="item_index", type=SearchFieldDataType.Int32, filterable=True, sortable=True),
@@ -121,14 +123,14 @@ class AzureSearchClient:
 		return SearchClient(endpoint=self.endpoint, index_name=self.index_name, credential=self.credential)
 
 	def ensure_index_exists(self) -> bool:
-		"""인덱스가 존재하는지 확인하고 없으면 생성한다."""
+		"""인덱스 존재 여부 확인 후 없으면 생성한다."""
 		try:
-			# 존재 여부 확인
+			# 인덱스 존재 여부 확인
 			self.index_client.get_index(self.index_name)
 			logger.info(f"인덱스가 이미 존재합니다: {self.index_name}")
 			return True
 		except Exception:
-			logger.info(f"인덱스를 찾을 수 없습니다. 생성 시도: {self.index_name}")
+			logger.info(f"인덱스를 찾을 수 없습니다. 생성을 시도합니다: {self.index_name}")
 			return self.create_compliance_index()
 
 	def _load_json_candidates(self, paths: List[str]) -> Optional[object]:
@@ -144,27 +146,20 @@ class AzureSearchClient:
 
 	def index_from_file(self, file_path: str = None, batch_size: int = 200) -> Dict:
 		"""로컬 JSON 파일을 읽어 인덱스에 업로드
-
-		file_path 우선순위:
-		1) 전달된 file_path
 		2) ./data/9_field.json
-		3) ./data/9_domains.json
-		4) ./data/test.json
 		"""
 		candidates = []
 		if file_path:
 			candidates.append(file_path)
 		candidates.extend([
-			os.path.join("data", "9_field.json"),
-			os.path.join("data", "9_domains.json"),
-			os.path.join("data", "test.json"),
+			os.path.join("data", "9_field.json")
 		])
 
 		data = self._load_json_candidates(candidates)
 		if data is None:
 			raise FileNotFoundError("인덱싱할 JSON 파일을 찾을 수 없습니다. 후보: " + ",".join(candidates))
 
-		# 문서 목록으로 변환
+	# JSON을 문서 목록 형식으로 변환
 		docs = []
 		if isinstance(data, dict):
 			# 형태: {"01_부패방지": [...], ...}
@@ -187,12 +182,13 @@ class AzureSearchClient:
 						"id": str(cid),
 						"category": item.get("category") or item.get("category", ""),
 						"category_no": item.get("category_no"),
+						"domain": item.get("domain"),
 						"content": item.get("content") or item.get("text") or json.dumps(item, ensure_ascii=False),
 						"source": os.path.basename(candidates[0]),
 						"item_index": idx,
 					})
 				else:
-					# 단순 문자열 리스트
+					# 단순 문자열 리스트 처리
 					docs.append({
 						"id": f"item-{idx}",
 						"category": None,
@@ -204,8 +200,67 @@ class AzureSearchClient:
 		else:
 			raise ValueError("지원되지 않는 JSON 구조입니다.")
 
-		# 배치 업로드
-		# 인덱스가 존재하는지 확인(없으면 생성)
+	# 배치 업로드 전 추가 처리
+	# --- 카테고리별 통합(doc per category) 문서 생성 ---
+	# 같은 카테고리의 content들을 합쳐 별도의 요약/집계 문서를 생성하면
+	# "컴플라이언스 9대분야 설명해줘" 같은 질문에 더 적합한 컨텍스트가 됩니다.
+		agg_map = {}
+		for d in docs:
+			cat_key = d.get("category") or str(d.get("category_no")) or "unknown"
+			agg_map.setdefault(cat_key, []).append(d.get("content", ""))
+
+		for cat, pieces in agg_map.items():
+			# 기존 문서에서 대표 category_no를 가져오려고 시도
+			cat_no = None
+			for d in docs:
+				if d.get("category") == cat and d.get("category_no") is not None:
+					cat_no = d.get("category_no")
+					break
+
+			agg_doc = {
+				"id": f"cat-{cat_no or cat}",
+				"category": cat,
+				"category_no": cat_no,
+				"domain": "컴플라이언스 9대분야",
+				"content": "\n\n".join(pieces),
+				"source": os.path.basename(candidates[0]),
+				"item_index": -1,
+			}
+			docs.append(agg_doc)
+
+	# 배치 업로드 준비
+
+	# --- 임베딩 생성(선택) ---
+	# 환경변수로 임베딩 모델/엔드포인트/키가 설정되어 있으면
+	# 각 문서에 'content_vector' 필드를 추가합니다. 실패하면 벡터 없이 업로드합니다.
+		embedding_model = os.getenv("AZURE_EMBEDDING_DEPLOYMENT") or os.getenv("AZURE_OPENAI_EMBEDDING_DEPLOYMENT")
+		oa_key = os.getenv("OPENAI_API_KEY") or os.getenv("AZURE_OPENAI_KEY") or os.getenv("AZURE_OPENAI_API_KEY")
+		oa_endpoint = os.getenv("AZURE_ENDPOINT") or os.getenv("AZURE_OPENAI_ENDPOINT")
+
+		if embedding_model and oa_key and oa_endpoint:
+			try:
+				emb_client = OpenAIClient(oa_endpoint, AzureKeyCredential(oa_key))
+				# 작은 배치로 나눠 임베딩 생성
+				chunk = 20
+				for i in range(0, len(docs), chunk):
+					inputs = [d.get("content", "") for d in docs[i : i + chunk]]
+					try:
+						resp = emb_client.embeddings.create(model=embedding_model, input=inputs)
+						for j, item in enumerate(resp.data):
+							vec = item.embedding
+								# 해당 문서에 벡터 할당
+							docs[i + j]["content_vector"] = vec
+					except Exception:
+						logger.exception("임베딩 생성 중 오류 발생(해당 배치는 건너뜁니다)")
+						# 이 배치는 벡터 없이 계속 진행
+						continue
+			except Exception:
+				logger.exception("임베딩 클라이언트 초기화 실패 - 벡터를 생성하지 않습니다.")
+		else:
+			logger.info("임베딩 환경변수 미설정 - content_vector를 생성하지 않습니다.")
+
+	# 배치 업로드
+	# 인덱스 존재 확인(없으면 생성)
 		self.ensure_index_exists()
 		client = self.get_search_client()
 		total = len(docs)
