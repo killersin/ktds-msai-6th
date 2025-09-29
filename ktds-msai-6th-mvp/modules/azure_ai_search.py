@@ -68,8 +68,8 @@ class AzureSearchClient:
 		logger.info("Azure SearchIndexClient 초기화 완료")
 
 	def create_compliance_index(self) -> bool:
-		"""컴플라이언스(9개 분야)용 인덱스 생성
-
+		"""
+		컴플라이언스(9개 분야)용 인덱스 생성
 		- content(검색가능), category/ category_no 필터 가능
 		- content_vector 필드는 벡터 검색을 위해 준비되어 있음(임베딩이 있을 때 업로드 가능)
 		"""

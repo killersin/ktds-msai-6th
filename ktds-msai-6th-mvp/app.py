@@ -1,27 +1,20 @@
 import os
 import json
 import time
-import logging
 import streamlit as st
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# Application Insights 로깅 설정
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+
+# Application Insights 초기화 모듈 사용
 try:
-    conn_str = os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING")
-    if conn_str:
-        try:
-            from opencensus.ext.azure.log_exporter import AzureLogHandler
-            logger.addHandler(AzureLogHandler(connection_string=conn_str))
-            logger.info("Application Insights 연결 성공!")
-        except Exception as e:
-            # 패키지 미설치 또는 핸들러 초기화 문제를 로컬 로거로 기록
-            logger.warning(f"Application Insights 핸들러 초기화 실패: {e}")
+    from modules.appinsight import get_logger, register_excepthook
+    logger = get_logger()
+    register_excepthook(logger)
 except Exception:
-    pass
+    # 실패 시에도 앱은 계속 실행
+    logger = None
 
 st.set_page_config(page_title="KTDS MSAI MVP 616", page_icon="🛡️")
 
@@ -53,6 +46,11 @@ if uploaded_files:
             with open(save_path, "wb") as out:
                 out.write(f.getbuffer())
             #st.sidebar.success(f"저장 완료: {save_name}")
+            if logger:
+                try:
+                    logger.info(f"File saved: {save_path}")
+                except Exception:
+                    pass
             meta = {"name": save_name, "path": save_path, "type": f.type, "size": os.path.getsize(save_path)}
             st.session_state["uploaded_files"].append(meta)
 
@@ -73,8 +71,18 @@ if uploaded_files:
                         blob_client.upload_blob(data, overwrite=True)
                     #st.sidebar.success(f"Blob 업로드 성공: {container_name}/{save_name}")
                     meta["blob_url"] = blob_client.url
+                    if logger:
+                        try:
+                            logger.info(f"Blob uploaded: {container_name}/{save_name} -> {meta['blob_url']}")
+                        except Exception:
+                            pass
                 except Exception as e:
                     st.sidebar.error(f"Blob 업로드 실패: {e}")
+                    if logger:
+                        try:
+                            logger.exception(f"Blob upload failed: {save_name}")
+                        except Exception:
+                            pass
             else:
                 st.sidebar.warning("AZURE_STORAGE_CONNECTION_STRING이 설정되어 있지 않아 Blob 업로드를 건너뜁니다.")
 
@@ -88,6 +96,11 @@ if uploaded_files:
                         main_ph = st.empty()
 
                         sidebar_ph.info("업로드된 JSON을 Azure Search에 인덱싱 중입니다...")
+                        if logger:
+                            try:
+                                logger.info(f"Start indexing file: {save_path}")
+                            except Exception:
+                                pass
                         asc = AzureSearchClient()
                         asc.ensure_index_exists()
                         res = asc.index_from_file(file_path=save_path)
@@ -97,6 +110,11 @@ if uploaded_files:
                         #main_ph.success(f"파일 인덱싱 성공: {save_name} — {msg}")
                         # 사이드바에도 결과를 잠시 보여줬다가 지움
                         sidebar_ph.success(msg)
+                        if logger:
+                            try:
+                                logger.info(f"Indexing result for {save_name}: {msg}")
+                            except Exception:
+                                pass
                         time.sleep(3)
                         try:
                             main_ph.empty()
@@ -109,8 +127,18 @@ if uploaded_files:
                     except ValueError as ve:
                         # 환경변수 누락으로 초기화 실패 시 사용자에게 안내
                         st.sidebar.warning(f"인덱스 초기화 건너뜀: {ve}")
+                        if logger:
+                            try:
+                                logger.warning(f"Index init skipped: {ve}")
+                            except Exception:
+                                pass
                     except Exception as ie:
                         st.sidebar.error(f"인덱싱 예외 발생: {ie}")
+                        if logger:
+                            try:
+                                logger.exception(f"Indexing failed for {save_name}: {ie}")
+                            except Exception:
+                                pass
             except Exception:
                 # 안전을 위해 전체 블록의 예외를 무시하고 계속 진행
                 pass
@@ -415,23 +443,13 @@ else:
     if not model:
         st.error("챗봇 모델을 초기화할 수 없습니다.")
     else:
-        # 이전 대화 히스토리 표시
         for msg in st.session_state["messages"]:
             with st.chat_message(msg["role"]):
                 st.markdown(msg["content"])
 
     if prompt := st.chat_input("User : "):
-        # 유저 메시지 저장 및 표시
-        st.session_state["messages"].append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
+            st.session_state["messages"].append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
 
-        # 모델 스트리밍 호출 및 결과를 세션에 저장
-        response_text = ""
-        try:
             response_text = _stream_response_to_chat(model, st.session_state["messages"])
-        except Exception as e:
-            st.error(f"응답 생성 중 오류: {e}")
-
-        # 스트리밍된 어시스턴트 응답을 대화 이력에 추가하여 다음 렌더링 시 보존
-        st.session_state["messages"].append({"role": "assistant", "content": response_text})
