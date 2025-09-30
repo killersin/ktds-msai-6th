@@ -79,16 +79,13 @@ modules/
 ```
 
 ## 📈 Azure 모니터링
-Application Insights 및 Azure Monitor를 사용해 애플리케이션 상태(시작/종료)와 로그/트레이스를 수집하고, Kusto 쿼리와 경고(Alert)를 통해 운영 알림을 구성하는 간단한 가이드입니다.
 Application Insights를 통해 애플리케이션 상태(시작/종료)를 수집하도록 구성
-
-아래 내용은 저장소의 소스(`modules/appinsight.py`, `app.py`)를 참고한 모니터링 및 알림 설정 가이드입니다.
 
 1) 구성 요약
 - 코드 위치: `modules/appinsight.py` (Application Insights 초기화 함수 `init_appinsights` 포함)
 - 앱 시작/종료 이벤트: `app.py`에서 `app_start`(앱 시작 시)와 `app_stop`(종료 시)를 전송합니다.
 - 필요 환경변수: `APPLICATIONINSIGHTS_CONNECTION_STRING` (App Service의 Application settings 또는 로컬 `.env`에 설정)
-- 배포 시 의무: 배포 환경(예: App Service)에 opencensus 관련 패키지들이 설치되어 있어야 원격으로 로그/트레이스 전송이 가능합니다. (`streamlit.sh` / `requirements.txt`를 확인)
+- 배포 시 의무: 배포 환경(예: App Service)에 opencensus 관련 패키지들이 설치되어 있어야 원격으로 로그/트레이스 전송이 가능합니다. (`streamlit.sh` 를 확인)
 
 2) 동작 원리(간단)
 - 앱이 시작될 때 `app_start` 이벤트가 track_event로 전송됩니다.
@@ -96,33 +93,18 @@ Application Insights를 통해 애플리케이션 상태(시작/종료)를 수�
 - Application Insights는 전송된 로그/트레이스/이벤트를 수집하고 Azure Portal의 Logs(또는 Live Metrics)에서 확인할 수 있습니다.
 
 3) Kusto(Logs) 예제 쿼리
-- 최근 시작/종료 이벤트 조회 (가장 최근 48시간)
-
-```kusto
-traces
-| where timestamp > ago(48h)
-| where message has "app_start" or message has "app_stop" or customDimensions['ai.cloud.role'] == "ktds-msai-mvp"
-| project timestamp, message, customDimensions, severityLevel
-| sort by timestamp desc
-```
-
+- 최근 시작/종료 이벤트 조회
 - `app_stop`만 필터링하여 최근 이벤트를 확인할 때:
 
 ```kusto
 traces
-| where timestamp > ago(30d)
-| where message has "app_stop" or customDimensions['EventName'] == "app_stop"
-| project timestamp, message, customDimensions
-| sort by timestamp desc
+| where timestamp > ago(5m)
+| where message contains "app_stop" or message contains "[EVENT] app_stop" 
+| summarize count() by cloud_RoleName
 ```
 
 4) Azure Monitor에서 경고(Alert) 만들기 (app_stop 감지)
-- 포털: Azure Monitor → Alerts → + Create → Alert rule
-     1. Scope: 해당 Application Insights 리소스 선택
-     2. Condition: "Custom log search" 선택
-     3. Custom query에 위의 `app_stop` 쿼리 사용
-           - 예: 최근 15분 간 `app_stop`이 1건 이상 발생하면 트리거
-           - 아래 예시는 15분 윈도우에 결과 수가 1 이상이면 알림
+- Custom query에 `app_stop`이 1건 이상 발생하면 트리거
 
 ## 🚀 향후 개선사항
 - 멀티모달 RAG 도입

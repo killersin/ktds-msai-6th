@@ -1,0 +1,2 @@
+2025-09-30T15:24:14 [EVENT] app_start | {'script': 'app.py'}
+2025-09-30T15:24:17 [EVENT] app_stop | {'script': 'app.py', 'reason': 'atexit'}

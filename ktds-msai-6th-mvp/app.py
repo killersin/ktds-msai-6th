@@ -5,6 +5,7 @@ import streamlit as st
 from dotenv import load_dotenv
 import logging
 import signal
+import atexit
 
 load_dotenv()
 
@@ -50,6 +51,11 @@ def _flush_appinsights(reason: str = "signal"):
                     h.flush()
             except Exception:
                 pass
+        # 핸들러 flush 후 더 넉넉한 대기 시간을 두어 비동기 전송이 네트워크로 나갈 시간을 줍니다.
+        try:
+            time.sleep(4)
+        except Exception:
+            pass
     except Exception:
         # 안전을 위해 예외는 무시
         pass
@@ -58,6 +64,19 @@ def _flush_appinsights(reason: str = "signal"):
 def _handle_termination(signum, frame):
     """SIGTERM/SIGINT 수신 시 실행되는 핸들러"""
     try:
+        # 디버그: 핸들러가 호출되는지 로컬 파일에 기록 (타임스탬프, PID, logger 초기화 상태, 핸들러 수)
+        try:
+            os.makedirs("data", exist_ok=True)
+            pid = os.getpid()
+            now = time.strftime('%Y-%m-%dT%H:%M:%S')
+            logger_present = bool(logger)
+            root = logging.getLogger()
+            handler_count = len(list(root.handlers))
+            with open(os.path.join("data", "app_shutdown.log"), "a", encoding="utf-8") as fh:
+                fh.write(f"{now} _handle_termination called: signum={signum} pid={pid} logger_present={logger_present} handlers={handler_count}\n")
+        except Exception:
+            pass
+
         # 가능한 경우 app_stop 전송
         _flush_appinsights(reason=f"signum_{signum}")
     finally:
@@ -76,6 +95,13 @@ try:
     signal.signal(signal.SIGINT, _handle_termination)
 except Exception:
     # signal 등록 불가 환경일 수 있음 — 무시
+    pass
+
+
+# 인터프리터 정상 종료 시에도 app_stop을 전송하도록 atexit에 등록
+try:
+    atexit.register(lambda: _flush_appinsights(reason="atexit"))
+except Exception:
     pass
 
 
