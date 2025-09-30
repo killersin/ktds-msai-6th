@@ -115,6 +115,7 @@ traces
 ```
 
 4) Azure Monitor에서 경고(Alert) 만들기 (app_stop 감지)
+<p align="left"><img src="assets/mvp5.png" alt="MVP 다이어그램" width="600" /></p>
 <p align="left"><img src="assets/mvp1.png" alt="MVP 다이어그램" width="200" /></p>
 
 ## 🚀 향후 개선사항

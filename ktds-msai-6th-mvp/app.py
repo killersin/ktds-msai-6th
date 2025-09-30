@@ -121,7 +121,7 @@ if st.sidebar.button("게시글 보기"):
 UPLOAD_DIR = os.path.join("data", "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-uploaded_files = st.sidebar.file_uploader("파일 업로드 (여러개 가능)", accept_multiple_files=True)
+uploaded_files = st.sidebar.file_uploader("인덱스할 파일을 업로드하세요", accept_multiple_files=True)
 if uploaded_files:
     if "uploaded_files" not in st.session_state:
         st.session_state["uploaded_files"] = []
