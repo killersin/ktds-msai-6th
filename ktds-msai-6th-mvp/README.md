@@ -88,12 +88,11 @@ Application Insights를 통해 애플리케이션 상태(시작/종료)를 수�
 - 배포 시 의무: 배포 환경(예: App Service)에 opencensus 관련 패키지들이 설치되어 있어야 원격으로 로그/트레이스 전송이 가능합니다. (`streamlit.sh` 를 확인)
 
 2) 동작 원리(간단)
-- 앱이 시작될 때 `app_start` 이벤트가 track_event로 전송됩니다.
-- 프로세스가 SIGTERM 또는 SIGINT를 받으면 `app_stop` 이벤트를 전송하고 로그 핸들러의 `flush()`를 호출해 가능한 한 즉시 전송을 시도합니다.
-- Application Insights는 전송된 로그/트레이스/이벤트를 수집하고 Azure Portal의 Logs(또는 Live Metrics)에서 확인할 수 있습니다.
+- 앱이 시작될 때 `app_start` 이벤트가 track_event로 전송
+- 프로세스가 SIGTERM 또는 SIGINT를 받으면 `app_stop` 이벤트를 전송
+- Application Insights는 전송된 로그/트레이스/이벤트를 수집하고 Azure Portal의 Logs(또는 Live Metrics)에서 확인
 
 3) Kusto(Logs) 예제 쿼리
-- 최근 시작/종료 이벤트 조회
 - `app_stop`만 필터링하여 최근 이벤트를 확인할 때:
 
 ```kusto
