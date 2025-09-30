@@ -45,14 +45,14 @@ RAG(Retrieval-Augmented Generation) 기반으로 KT내 컴플라이언스 관련
  - 게시판 크롤링
  - 뉴스 요약 처리 (GPT)
  - 슬랙 채널 자동 전송
-
+```
 🧰 주요 기술 스택 
 ----------------
 - 프레임워크: LangChain
 - 웹 UI: Streamlit
 - 프로그래밍 언어: Python 3.11
 - 클라우드: Microsoft Azure (AI Search, OpenAI, App Service, Blob Storage)
-```
+
 ---
 💬 RAG 검색 시나리오 예시 
 -----------------------
