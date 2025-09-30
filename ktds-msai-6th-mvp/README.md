@@ -20,10 +20,10 @@ RAG(Retrieval-Augmented Generation) 기반으로 KT내 컴플라이언스 관련
 -----------
 1) RAG 기반 검색·응답
  - Azure AI Search로 관련 문서를 검색하고, 검색 결과를 컨텍스트로 Azure OpenAI(GPT-4.1-mini)에 전달하여
-      정확하고 근거 있는 응답을 제공합니다.
+      정확하고 근거 있는 응답을 제공
 
 2) 뉴스 요약 및 알림
- - 사내 게시글을 수집하여 요약을 생성하고, 결과를 슬랙으로 전송하여 인식 제고에 활용합니다.
+ - 사내 게시글을 수집하여 요약을 생성하고, 결과를 슬랙으로 전송하여 인식 제고에 활용
 
 ## 🏗️ 시스템 아키텍처
 
@@ -46,6 +46,7 @@ RAG(Retrieval-Augmented Generation) 기반으로 KT내 컴플라이언스 관련
  - 게시판 크롤링
  - 뉴스 요약 처리 (GPT)
  - 슬랙 채널 자동 전송
+ <p align="left"><img src="assets/mvp2.png" alt="MVP 다이어그램" width="200" /></p>
 ```
 🧰 주요 기술 스택 
 ----------------
@@ -86,7 +87,7 @@ Application Insights를 통해 애플리케이션 상태(시작/종료)를 수�
 - 코드 위치: `modules/appinsight.py` (Application Insights 초기화 함수 `init_appinsights` 포함)
 - 앱 시작/종료 이벤트: `app.py`에서 `app_start`(앱 시작 시)와 `app_stop`(종료 시)를 전송합니다.
 - 필요 환경변수: `APPLICATIONINSIGHTS_CONNECTION_STRING` (App Service의 Application settings 또는 로컬 `.env`에 설정)
-- 배포 시 의무: 배포 환경(예: App Service)에 opencensus 관련 패키지들이 설치되어 있어야 원격으로 로그/트레이스 전송이 가능합니다. (`streamlit.sh` 를 확인)
+- 배포 시 의무: 배포 환경(예: App Service)에 opencensus 관련 패키지들이 설치되어 있어야 로그 전송이 가능(`streamlit.sh` 를 확인)
 
 2) 동작 원리(간단)
 - 앱이 시작될 때 `app_start` 이벤트가 track_event로 전송
@@ -98,15 +99,13 @@ Application Insights를 통해 애플리케이션 상태(시작/종료)를 수�
 
 ```kusto
 traces
-| where timestamp > ago(5m)
+| where timestamp > ago(2d)
 | where message contains "app_stop" or message contains "[EVENT] app_stop" 
 | summarize count() by cloud_RoleName
 ```
 
 4) Azure Monitor에서 경고(Alert) 만들기 (app_stop 감지)
-<p align="center">
-  <img src="assets/mvp1.png" alt="MVP 다이어그램" width="600" />
-</p>
+<p align="left"><img src="assets/mvp1.png" alt="MVP 다이어그램" width="200" /></p>
 
 ## 🚀 향후 개선사항
 - 멀티모달 RAG 도입
