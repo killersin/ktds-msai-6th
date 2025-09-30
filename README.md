@@ -50,18 +50,19 @@ RAG(Retrieval-Augmented Generation) 기반으로 KT 사내 컴플라이언스 �
 - 웹 UI: Streamlit
 - 프로그래밍 언어: Python 3.11
 - 클라우드: Microsoft Azure (AI Search, OpenAI, App Service, Blob Storage)
-
+```
+---
 💬 RAG 검색 시나리오 예시 
 -----------------------
 - "임직원 보안수준진단사이트 주소 알려줘" → 관련 문서 내 링크/참고 제공
 - "컴플라이언스 9가지 분야 뭐가 있어?" → 9대 분야 목록 및 간단 설명 반환
 - "점심메뉴 추천" → 업무 범위를 벗어난 요청은 거부 및 가이드 안내
+---
 
+```
 📁 프로젝트 실제 파일 구조 (이 저장소의 `ktds-msai-6th-mvp` 폴더 기준) 
 ---------------------------------------------
-```
----
-```
+
 .deployment                 # 배포 관련(옵션)
 .env                       # 환경변수 (개인/비공개 - Git 제외)
 app.py                     # Streamlit 앱 엔트리 포인트
