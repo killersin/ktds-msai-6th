@@ -16,6 +16,7 @@ Application Insights 연동 모듈
 
 import os
 import logging
+import time
 from contextlib import contextmanager
 
 try:
@@ -120,6 +121,20 @@ def init_appinsights(service_name: str | None = None):
 						self.logger.info(f"[EVENT] {name} | {properties}")
 					else:
 						self.logger.info(f"[EVENT] {name}")
+				except Exception:
+					pass
+
+				# 디버그/폴백: app_start/app_stop 이벤트가 실제로 호출되었는지
+				# 로컬 파일에 기록하여 App Service 종료 시 전송 실패 여부를 검사할 수 있게 합니다.
+				try:
+					if name in ("app_stop", "app_start"):
+						try:
+							os.makedirs("data", exist_ok=True)
+							with open(os.path.join("data", "appinsights_events.log"), "a", encoding="utf-8") as fh:
+								fh.write(f"{time.strftime('%Y-%m-%dT%H:%M:%S')} [EVENT] {name} | {properties}\n")
+						except Exception:
+							# 로컬 기록 실패는 무시
+							pass
 				except Exception:
 					pass
 
