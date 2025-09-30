@@ -104,7 +104,9 @@ traces
 ```
 
 4) Azure Monitor에서 경고(Alert) 만들기 (app_stop 감지)
-- Custom query에 `app_stop`이 1건 이상 발생하면 트리거
+<p align="center">
+  <img src="assets/mvp1.png" alt="MVP 다이어그램" width="600" />
+</p>
 
 ## 🚀 향후 개선사항
 - 멀티모달 RAG 도입
