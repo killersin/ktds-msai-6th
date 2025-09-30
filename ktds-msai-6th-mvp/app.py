@@ -146,16 +146,7 @@ if uploaded_files:
         except Exception as e:
             st.sidebar.error(f"파일 저장 실패: {e}")
 
-# 업로드된 파일 목록 보기 토글
-# if st.sidebar.checkbox("업로드 파일 목록 보기"):
-#     files = st.session_state.get("uploaded_files", [])
-#     if not files:
-#         st.sidebar.info("업로드된 파일이 없습니다.")
-#     else:
-#         for i, mf in enumerate(files):
-#             st.sidebar.write(f"{i+1}. {mf['name']} — {mf['size']} bytes")
-
-mode = st.sidebar.selectbox("모드 선택", ["Azure Search", "챗봇"])
+mode = st.sidebar.selectbox("모드 선택", ["Azure Search", "일반검색"])
 
 # 모드 변경 시 이전 대화 메시지 초기화
 if "last_mode" not in st.session_state:
