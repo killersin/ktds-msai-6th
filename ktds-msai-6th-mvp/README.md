@@ -1,4 +1,4 @@
-# 📘 RAG 기반 컴플라이언스 챗봇
+# 📘 컴플라이언스 AI어시스턴트 (RAG 기반)
 ✨ 이 문서는 로컬 개발 및 PoC(Proof of Concept) 배포를 위한 README입니다.
 
 🎯 프로젝트 개요
