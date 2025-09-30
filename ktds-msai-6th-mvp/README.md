@@ -72,23 +72,29 @@ ktds-msai-6th-mvp/
 ├─ .deployment                      # 배포 관련(옵션)
 ├─ .env                             # 환경변수 (로컬/비공개)
 ├─ app.py                           # Streamlit 앱 엔트리포인트
-├─ README.md                        # 프로젝트 설명서 (지금 편집 중)
+├─ README.md                        # 프로젝트 설명서
 ├─ streamlit.sh                     # App Service용 시작/설치 스크립트
+├─ __pycache__/                      # 파이썬 캐시 (배포/로컬)
 ├─ assets/
 │   ├─ mvp1.png                      # 다이어그램 이미지
-│   └─ mvp2.png                      # 다이어그램 이미지
+│   ├─ mvp2.png                      # 다이어그램 이미지
+│   ├─ mvp3.png                      # 다이어그램 이미지
+│   ├─ mvp4.png                      # 다이어그램 이미지
+│   └─ mvp5.png                      # 다이어그램 이미지
 ├─ data/
 │   ├─ 9_field.json                  # 카테고리 샘플
 │   ├─ appinsights_events.log        # (로컬/배포) 폴백 이벤트 로그
 │   ├─ board_data.json               # 게시글 예시 데이터
 │   ├─ 컴플라이언스 9대분야.xlsx
-│   └─ uploads/                      # 업로드된 파일 임시 저장소
+│   └─ uploads/
+│       └─ 9_field.json              # 업로드된 샘플
 ├─ modules/
-│   ├─ appinsight.py                 # Application Insights 초기화/로그 
+│   ├─ appinsight.py                 # Application Insights 초기화/로그
 │   ├─ azure_ai_search.py            # Azure Search 유틸/클라이언트
 │   ├─ newssummary.py                # 게시판/요약/Slack 전송 로직
-│   └─ test_appinsights_local.py     # 로컬 전송 테스트 스크립트
-└─ __pycache__/                      # 파이썬 캐시
+│   ├─ test_appinsights_local.py     # 로컬 전송 테스트 스크립트
+│   └─ __pycache__/                  # 모듈 캐시
+└─ .gitignore                       # (선택) 배포/로컬 비공개 파일 제외 권장
 ```
 
 ## 📈 Azure 모니터링
@@ -123,3 +129,6 @@ traces
 - 멀티모달 RAG 도입(텍스트, 이미지, 오디오 등 여러 종류의 데이터를 통합적으로 처리하고 검색하는 RAG 기술)
 - LangChain 체이닝으로 응답을 단계별로 생성·검증·개선해 정확도 향상 
 - LangGraph와 LangSmith로 체인 흐름과 실행 트레이스를 모니터링하여 품질을 보증
+
+
+URL : https://appsvc-ktds-616-01.azurewebsites.net/
