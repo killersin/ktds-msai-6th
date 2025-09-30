@@ -56,7 +56,8 @@ RAG(Retrieval-Augmented Generation) 기반으로 KT내 컴플라이언스 관련
 - 프레임워크: LangChain
 - 웹 UI: Streamlit
 - 프로그래밍 언어: Python 3.11
-- 클라우드: Microsoft Azure (AI Search, OpenAI, App Service, Blob Storage)
+- 클라우드: Microsoft Azure (AI Search, OpenAI, App Service, Blob Storage, Application Insights)
+- 통신/알림: Slack (Incoming Webhooks)
 
 💬 RAG 검색 시나리오 예시 
 -----------------------
@@ -115,10 +116,11 @@ traces
 ```
 
 4) Azure Monitor에서 경고(Alert) 만들기 (app_stop 감지)
-<p align="left"><img src="assets/mvp5.png" alt="MVP 다이어그램" width="600" /></p>
+<p align="left"><img src="assets/mvp5.png" alt="MVP 다이어그램" width="900" /></p>
 <p align="left"><img src="assets/mvp1.png" alt="MVP 다이어그램" width="200" /></p>
 
 ## 🚀 향후 개선사항
 - 멀티모달 RAG 도입
- 텍스트, 이미지, 오디오 등 여러 종류의 데이터를 통합적으로 처리하고 검색하는 RAG(Retrieval Augmented Generation) 기술
-- 인증·인가(SSO 연동) 도입
+ 텍스트, 이미지, 오디오 등 여러 종류의 데이터를 통합적으로 처리하고 검색하는 RAG 기술
+- LangChain 체이닝으로 응답을 단계별로 생성·검증·개선해 정확도 향상 
+- LangGraph와 LangSmith로 체인 흐름과 실행 트레이스를 모니터링하여 품질을 보증
