@@ -1,50 +1,145 @@
-(이 저장소의 README는 기본 설명과 로컬 실행 안내를 포함합니다.)
+물론입니다! 아래는 **GitHub에 바로 사용 가능한 마크다운 형식의 README.md 전체 내용**입니다. 시스템 아키텍처는 간단한 **텍스트 설명**과 함께, 추후 다이어그램으로 교체할 수 있도록 구조를 마련해두었습니다.
 
-로컬 실행 안내
-----------------
+---
 
-이 프로젝트는 Streamlit으로 실행되는 간단한 데모 앱입니다. 주요 기능:
+````markdown
+# 📘 RAG 기반 KT 컴플라이언스 챗봇
 
-- 챗봇: Azure OpenAI(또는 호환 가능한 모델)를 사용한 스트리밍 챗봇
-- RAG: Azure AI Search에서 벡터(또는 텍스트) 검색으로 관련 문서를 찾아 챗봇에 컨텍스트로 제공
+## 📝 프로젝트 개요
 
-필수 환경 변수 (.env)
-----------------------
+**RAG 기반으로 KT 사내 규정 컴플라이언스 질의응답을 지원하고, 최신 뉴스 및 사례를 요약해 알림을 제공하는 AI 어시스턴트**입니다.
 
-다음 환경 변수를 설정해야 합니다 (예: .env 파일):
+> **컴플라이언스(Compliance)**: 기업 내에서 발생할 수 있는 윤리적, 법적, 재무적 리스크를 사전에 방지하고, 관련 규정을 준수하도록 돕는 활동입니다.
 
-- AZURE_SEARCH_ENDPOINT: Azure Search 서비스 엔드포인트 (예: https://<name>.search.windows.net)
-- AZURE_SEARCH_API_KEY 또는 AZURE_SEARCH_KEY: Azure Search API 키
-- AZURE_SEARCH_INDEX_NAME: 사용할 인덱스 이름
-- AZURE_ENDPOINT: Azure OpenAI 엔드포인트 (임베딩/챗 모델 사용 시)
-- OPENAI_API_KEY 또는 AZURE_OPENAI_KEY: Azure OpenAI 인증 키
-- AZURE_OPENAI_VERSION: Azure OpenAI API 버전 (예: 2024-06-01-preview)
-- AZURE_EMBEDDING_DEPLOYMENT: 임베딩 모델(배포 이름), 있으면 벡터 검색을 사용
-- AZURE_CHAT_DEPLOYMENT: 챗 모델 배포 이름(기본값: gpt-4.1-mini)
+---
 
-간단 실행 방법
-----------------
+## ❗ 문제 정의
 
-1. 필요한 패키지 설치:
+1. **복잡하고 방대한 사내 컴플라이언스 규정**으로 인해  
+   → 직원들이 필요한 정보를 빠르게 찾고 이해하기 어려움  
 
-```powershell
-python -m pip install -r requirements.txt
+2. **컴플라이언스 관련 최신 동향 및 사례 인식 부족**  
+   → 지속적인 트렌드 파악이 어렵고, 규정에 대한 인식 수준이 낮음
+
+---
+
+## ✅ 해결 방안
+
+### 1. RAG 기반 컴플라이언스 챗봇 도입
+- 사내 규정 문서를 RAG(Retrieval-Augmented Generation) 기술로 연결  
+- 직원이 자연어로 질문하면, 관련 문서를 검색·요약하여 정확하고 이해하기 쉬운 답변 제공  
+
+### 2. 컴플라이언스 뉴스 요약 및 슬랙 자동 전송 기능 구축
+- 외부 게시판의 최신 컴플라이언스 뉴스 및 사례를 요약  
+- 슬랙 채널로 정기 전송하여 트렌드 파악 및 인식 제고
+
+---
+
+## 🏗️ 시스템 아키텍처
+
+```plaintext
+사용자 질문
+     ↓
+[Streamlit Web UI]
+     ↓
+[LangChain]
+     ↓
+1. 질문 의도 분석 및 필터링
+     ↓
+2. RAG 파이프라인 처리
+   - Azure AI Search: 관련 문서 검색
+   - Azure OpenAI GPT-4.1 Mini: 답변 생성
+     ↓
+3. 응답 출력 (Q&A)
+
++ [뉴스 요약 및 슬랙 알림]
+ - 외부 게시판 크롤링
+ - 뉴스 요약 처리 (GPT)
+ - 슬랙 채널 자동 전송
+````
+
+> 추후 다이어그램으로 시각화 가능 (`mermaid` 또는 이미지 첨부)
+
+---
+
+## 🧰 기술 스택
+
+| 분류           | 기술                          |
+| ------------ | --------------------------- |
+| **프레임워크**    | LangChain                   |
+| **웹 UI**     | Streamlit                   |
+| **프로그래밍 언어** | Python 3.11                 |
+| **클라우드 플랫폼** | Microsoft Azure             |
+| **LLM**      | Azure OpenAI (GPT-4.1 Mini) |
+| **Search**   | Azure AI Search             |
+| **호스팅**      | Azure App Service (WebApp)  |
+
+---
+
+## 💬 RAG 검색 시나리오 예시
+
+| 질문                     | 챗봇 응답 예시                       |
+| ---------------------- | ------------------------------ |
+| `임직원 보안수준진단사이트 주소 알려줘` | 관련 규정 문서에서 링크 제공               |
+| `컴플라이언스 9가지 분야 뭐가 있어?` | 컴플라이언스의 9가지 주요 분야 나열 및 설명      |
+| `점심메뉴 추천`              | 질문 거부 및 안내 메시지 출력 (비업무성 질문 제한) |
+
+---
+
+## 📌 주요 기능 요약
+
+* ✅ 사내 규정 문서 기반 실시간 Q&A
+* ✅ 외부 뉴스 자동 요약 및 슬랙 알림
+* ✅ 자연어 기반 인터페이스 제공
+* ✅ 비업무성 질문 필터링
+
+---
+
+## 📂 폴더 구조 (예시)
+
+```bash
+📦 kt-compliance-chatbot
+├── 📁 app                # Streamlit 웹 애플리케이션
+├── 📁 rag_pipeline       # RAG 처리 로직 (LangChain 기반)
+├── 📁 news_summary       # 뉴스 크롤링 및 요약 기능
+├── 📁 config             # 환경 설정 파일 (API 키, 엔드포인트 등)
+├── requirements.txt      # 필요한 파이썬 패키지
+└── README.md             # 프로젝트 설명 문서
 ```
 
-2. .env 파일을 프로젝트 루트에 준비
+---
 
-3. Streamlit 앱 실행:
+## 🛠️ 설치 및 실행
 
-```powershell
-python -m streamlit run ktds-msai-6th-mvp\app.py
+```bash
+# 1. 가상환경 생성 및 활성화 (선택사항)
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# 2. 패키지 설치
+pip install -r requirements.txt
+
+# 3. 앱 실행
+streamlit run app/main.py
 ```
 
-검증 및 문제해결
------------------
+---
 
-- Azure Search 관련 오류가 발생하면 .env의 인덱스 이름에 따옴표가 포함되어 있지 않은지 확인하세요.
-- 벡터 검색을 사용하려면 `AZURE_EMBEDDING_DEPLOYMENT`와 Azure OpenAI 접근이 필요하며, 임베딩을 생성할 수 있는 권한이 있어야 합니다.
-- 패키지 설치가 실패하면 `requirements.txt`의 항목을 확인하고 개별적으로 설치해 보세요.
+## 📮 문의 / 기여
 
-더 필요한 문서나 자동화(예: 인덱스 생성 스크립트)를 원하시면 알려주세요.
+본 프로젝트에 대한 문의 또는 개선 아이디어가 있다면 Issue를 등록하거나 Pull Request를 통해 기여해 주세요.
 
+---
+
+```
+
+---
+
+필요하다면 이 README에 다음 항목도 추가 가능합니다:
+
+- 라이선스 (`MIT`, `Apache-2.0` 등)
+- 배포 주소 (만약 Streamlit Cloud 또는 Azure에 배포된 URL이 있다면)
+- 사용 예시 스크린샷
+
+원하시면 그 부분도 도와드릴게요.
+```
