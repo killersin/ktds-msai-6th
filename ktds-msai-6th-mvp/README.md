@@ -131,4 +131,4 @@ traces
 - LangGraph와 LangSmith로 체인 흐름과 실행 트레이스를 모니터링하여 품질을 보증
 
 
-URL : https://appsvc-ktds-616-01.azurewebsites.net/
+URL : <a href="https://appsvc-ktds-616-01.azurewebsites.net/" target="_blank" rel="noopener noreferrer">https://appsvc-ktds-616-01.azurewebsites.net/</a>
