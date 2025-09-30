@@ -24,6 +24,7 @@ RAG(Retrieval-Augmented Generation) 기반으로 KT내 컴플라이언스 관련
 
 2) 뉴스 요약 및 알림
  - 사내 게시글을 수집하여 요약을 생성하고, 결과를 슬랙으로 전송하여 인식 제고에 활용
+<p align="left"><img src="assets/mvp2.png" alt="MVP 다이어그램" width="200" /></p>
 
 ## 🏗️ 시스템 아키텍처
 
@@ -46,8 +47,8 @@ RAG(Retrieval-Augmented Generation) 기반으로 KT내 컴플라이언스 관련
  - 게시판 크롤링
  - 뉴스 요약 처리 (GPT)
  - 슬랙 채널 자동 전송
- <p align="left"><img src="assets/mvp2.png" alt="MVP 다이어그램" width="200" /></p>
-```
+ ```
+
 🧰 주요 기술 스택 
 ----------------
 - 프레임워크: LangChain
