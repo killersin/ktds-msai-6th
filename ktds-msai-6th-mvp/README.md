@@ -21,10 +21,12 @@ RAG(Retrieval-Augmented Generation) 기반으로 KT내 컴플라이언스 관련
 1) RAG 기반 검색·응답
  - Azure AI Search로 관련 문서를 검색하고, 검색 결과를 컨텍스트로 Azure OpenAI(GPT-4.1-mini)에 전달하여
       정확하고 근거 있는 응답을 제공
+<p align="left"><img src="assets/mvp4.png" alt="MVP 다이어그램" width="800" /></p>
 
 2) 뉴스 요약 및 알림
  - 사내 게시글을 수집하여 요약을 생성하고, 결과를 슬랙으로 전송하여 인식 제고에 활용
-<p align="left"><img src="assets/mvp2.png" alt="MVP 다이어그램" width="200" /></p>
+<p align="left"><img src="assets/mvp3.png" alt="MVP 다이어그램" width="800" /></p>
+<p align="left"><img src="assets/mvp2.png" alt="MVP 다이어그램" width="800" /></p>
 
 ## 🏗️ 시스템 아키텍처
 
@@ -63,22 +65,29 @@ RAG(Retrieval-Augmented Generation) 기반으로 KT내 컴플라이언스 관련
 - "점심메뉴 추천" → 업무 범위를 벗어난 요청은 거부 및 가이드 안내
 
 ```
-📁 프로젝트 실제 파일 구조 (이 저장소의 `ktds-msai-6th-mvp` 폴더 기준) 
+📁 프로젝트 실제 파일 구조
 ---------------------------------------------
-
-.deployment                 # 배포 관련(옵션)
-.env                       # 환경변수 (개인/비공개 - Git 제외)
-app.py                     # Streamlit 앱 엔트리 포인트
-streamlit.sh               # 배포/실행 스크립트(App Service용)
-assets/                    # 정적 자원(추가 가능한 다이어그램 등)
-data/
-     ├─ board_data.json       # 게시글(뉴스) 예시 데이터
-     ├─ 9_field.json          # 컴플라이언스 카테고리 샘플
-     └─ uploads/              # 업로드된 파일 임시 저장소
-modules/
-     ├─ appinsight.py         # App Insights 초기화 및 로깅
-     ├─ azure_ai_search.py    # Azure Search 클라이언트 및 인덱싱 유틸
-     └─ newssummary.py        # 게시판 목록/상세, 요약 및 슬랙 전송
+ktds-msai-6th-mvp/
+├─ .deployment                      # 배포 관련(옵션)
+├─ .env                             # 환경변수 (로컬/비공개)
+├─ app.py                           # Streamlit 앱 엔트리포인트
+├─ README.md                        # 프로젝트 설명서 (지금 편집 중)
+├─ streamlit.sh                     # App Service용 시작/설치 스크립트
+├─ assets/
+│   ├─ mvp1.png                      # 다이어그램 이미지
+│   └─ mvp2.png                      # 다이어그램 이미지
+├─ data/
+│   ├─ 9_field.json                  # 카테고리 샘플
+│   ├─ appinsights_events.log        # (로컬/배포) 폴백 이벤트 로그
+│   ├─ board_data.json               # 게시글 예시 데이터
+│   ├─ 컴플라이언스 9대분야.xlsx
+│   └─ uploads/                      # 업로드된 파일 임시 저장소
+├─ modules/
+│   ├─ appinsight.py                 # Application Insights 초기화/로그 
+│   ├─ azure_ai_search.py            # Azure Search 유틸/클라이언트
+│   ├─ newssummary.py                # 게시판/요약/Slack 전송 로직
+│   └─ test_appinsights_local.py     # 로컬 전송 테스트 스크립트
+└─ __pycache__/                      # 파이썬 캐시
 ```
 
 ## 📈 Azure 모니터링
