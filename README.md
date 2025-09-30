@@ -57,7 +57,7 @@ RAG(Retrieval-Augmented Generation) 기반으로 KT내 컴플라이언스 관련
 💬 RAG 검색 시나리오 예시 
 -----------------------
 - "임직원 보안수준진단사이트 주소 알려줘" → 관련 문서 내 링크/참고 제공
-- "KT가 규정한 산업안전보건 관련 주요 컴플라이언스 사항" → 사내 규정을 정리
+- "KT가 규정한 산업안전보건 알려줘" → 사내 규정을 정리
 - "점심메뉴 추천" → 업무 범위를 벗어난 요청은 거부 및 가이드 안내
 ---
 
@@ -68,7 +68,7 @@ RAG(Retrieval-Augmented Generation) 기반으로 KT내 컴플라이언스 관련
 .deployment                 # 배포 관련(옵션)
 .env                       # 환경변수 (개인/비공개 - Git 제외)
 app.py                     # Streamlit 앱 엔트리 포인트
-streamlit.sh               # 배포/실행 스크립트(예: App Service용)
+streamlit.sh               # 배포/실행 스크립트(App Service용)
 assets/                    # 정적 자원(추가 가능한 다이어그램 등)
 data/
      ├─ board_data.json       # 게시글(뉴스) 예시 데이터
@@ -76,7 +76,11 @@ data/
      └─ uploads/              # 업로드된 파일 임시 저장소
 modules/
      ├─ appinsight.py         # App Insights 초기화 및 로깅
-     ├─ appinsigjt.py         # (중복/임시) App Insights 관련 파일
      ├─ azure_ai_search.py    # Azure Search 클라이언트 및 인덱싱 유틸
      └─ newssummary.py        # 게시판 목록/상세, 요약 및 슬랙 전송
 ```
+
+## 향후 개선사항
+- 멀티모달 RAG 도입
+ 텍스트, 이미지, 오디오 등 여러 종류의 데이터를 통합적으로 처리하고 검색하는 RAG(Retrieval Augmented Generation) 기술
+- 인증·인가(SSO 연동) 도입
