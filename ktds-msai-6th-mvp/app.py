@@ -3,18 +3,81 @@ import json
 import time
 import streamlit as st
 from dotenv import load_dotenv
+import logging
+import signal
 
 load_dotenv()
 
-
-# Application Insights 초기화 모듈 사용
+# Application Insights 초기화 (modules/appinsight.py에서 제공)
 try:
-    from modules.appinsight import get_logger, register_excepthook
-    logger = get_logger()
-    register_excepthook(logger)
+    from modules.appinsight import init_appinsights
+    # logger: 모듈 전반에서 사용되는 간단한 로거 인터페이스
+    logger = init_appinsights("ktds-msai-mvp")
 except Exception:
-    # 실패 시에도 앱은 계속 실행
     logger = None
+    # init이 실패하면 기본 로거를 사용하도록 설정
+    import logging as _logging
+    _logging.getLogger().addHandler(_logging.NullHandler())
+
+# 앱 시작 시 Application Insights에 시작 이벤트 전송 (포털에서 서비스 상태/역할을 빠르게 확인 가능)
+if logger:
+    try:
+        logger.track_event("app_start", {"script": "app.py"})
+        logger.info("Application started: ktds-msai-mvp")
+    except Exception:
+        pass
+
+
+# 앱 종료 시 Application Insights에 종료 이벤트를 전송하고
+# 로거 핸들러들을 flush하여 가능한 한 빨리 원격으로 전송되도록 합니다.
+def _flush_appinsights(reason: str = "signal"):
+    """앱 종료 시 호출: app_stop 이벤트 전송 및 로거 핸들러 flush (한글 주석)"""
+    try:
+        # app_stop 이벤트 전송
+        if logger:
+            try:
+                logger.track_event("app_stop", {"script": "app.py", "reason": reason})
+                logger.info(f"Application stopping: reason={reason}")
+            except Exception:
+                # 전송 실패 시 무시
+                pass
+
+        # 루트 로거의 핸들러들에 대해 flush()가 있으면 호출
+        root = logging.getLogger()
+        for h in list(root.handlers):
+            try:
+                if hasattr(h, "flush"):
+                    h.flush()
+            except Exception:
+                pass
+    except Exception:
+        # 안전을 위해 예외는 무시
+        pass
+
+
+def _handle_termination(signum, frame):
+    """SIGTERM/SIGINT 수신 시 실행되는 핸들러"""
+    try:
+        # 가능한 경우 app_stop 전송
+        _flush_appinsights(reason=f"signum_{signum}")
+    finally:
+        # 종료 시 프로세스 종료 호출 (Streamlit 환경에서도 정상 종료를 시도)
+        try:
+            import sys
+            sys.exit(0)
+        except Exception:
+            pass
+
+
+# 대부분의 Linux 기반 App Service에서는 SIGTERM이 전달됩니다.
+# Windows나 일부 환경에서는 signal 등록이 제한적일 수 있어 예외를 무시합니다.
+try:
+    signal.signal(signal.SIGTERM, _handle_termination)
+    signal.signal(signal.SIGINT, _handle_termination)
+except Exception:
+    # signal 등록 불가 환경일 수 있음 — 무시
+    pass
+
 
 st.set_page_config(page_title="KTDS MSAI MVP 616", page_icon="🛡️")
 
@@ -23,10 +86,12 @@ if "show_board" not in st.session_state:
 
 if st.sidebar.button("홈으로"):
     st.session_state["show_board"] = False
+    st.session_state["messages"] = []
 if st.sidebar.button("게시글 보기"):
     st.session_state["show_board"] = True
+    st.session_state["messages"] = []
 
-# --- 사이드바: 파일 업로드 (게시글 보기 버튼과 모드 선택 사이) ---
+# 사이드바: 파일 업로드 (게시글 보기 버튼과 모드 선택 사이)
 UPLOAD_DIR = os.path.join("data", "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
@@ -365,7 +430,7 @@ if "messages" not in st.session_state:
     # 기본 시스템 메시지 없이 빈 대화 이력으로 시작합니다.
     st.session_state["messages"] = []
 if "rag_top_k" not in st.session_state:
-    st.session_state["rag_top_k"] = 10
+    st.session_state["rag_top_k"] = 5
 
 # 화면 렌더링
 env = _get_env_keys()
@@ -390,40 +455,50 @@ if mode == "Azure Search":
 
             if prompt := st.chat_input("User : "):
                 st.session_state["messages"].append({"role": "user", "content": prompt})
+                # 사용자의 메시지는 먼저 별도 블록으로 렌더링
                 with st.chat_message("user"):
                     st.markdown(prompt)
 
-                    search_client = _init_search_client(env["search_endpoint"], env["search_key"], env["search_index"])
-                    embedding_vector = _get_embedding(prompt, env["embedding_deployment"], env)
-                    top_k = int(st.session_state.get("rag_top_k", 5))
-                    # 카테고리 개요 요청 판별: 로컬 카테고리 이름이 프롬프트에 포함된 경우
-                    is_category_overview = any(cat in prompt for cat in LOCAL_CATEGORIES)
+                # 사용자 블록 종료 후 검색 및 모델 호출 로직을 실행하여
+                # assistant 메시지가 별도의 채팅 블록으로 렌더되도록 합니다.
+                search_client = _init_search_client(env["search_endpoint"], env["search_key"], env["search_index"])
+                embedding_vector = _get_embedding(prompt, env["embedding_deployment"], env)
+                top_k = int(st.session_state.get("rag_top_k", 5))
+                # 카테고리 개요 요청 판별: 로컬 카테고리 이름이 프롬프트에 포함된 경우
+                is_category_overview = any(cat in prompt for cat in LOCAL_CATEGORIES)
 
-                    if is_category_overview:
-                        # agg 문서(item_index == -1)를 우선 조회하여 카테고리 설명을 확보
-                        retrieved_docs = _retrieve_documents(search_client, prompt, embedding_vector, top_k)
-                        # 필터링 없이 이미 index에서 agg_doc가 생성되어 있으면 포함되어야 함
-                    else:
-                        retrieved_docs = _retrieve_documents(search_client, prompt, embedding_vector, top_k)
+                if is_category_overview:
+                    # agg 문서(item_index == -1)를 우선 조회하여 카테고리 설명을 확보
+                    retrieved_docs = _retrieve_documents(search_client, prompt, embedding_vector, top_k)
+                    # 필터링 없이 이미 index에서 agg_doc가 생성되어 있으면 포함되어야 함
+                else:
+                    retrieved_docs = _retrieve_documents(search_client, prompt, embedding_vector, top_k)
 
-                    if not retrieved_docs:
-                        canned = "컴플라이언스 관련 문의에 대해서만 답변을 제공하고 있음을 안내드립니다.\n그 외의 문의사항은 답변이 어려운 점 양해 부탁드립니다."
-                        st.info(canned)
-                        # 모델을 호출하지 않고 고정 응답을 대화 이력에 추가
-                        st.session_state["messages"].append({"role": "assistant", "content": canned})
-                    else:
-                        st.subheader(f"검색 결과 ({len(retrieved_docs)})")
-                        for d in retrieved_docs:
-                            title_parts = [p for p in (d.get("domain"), d.get("category")) if p]
-                            title = " | ".join(title_parts) if title_parts else (d.get("category") or "항목")
-                            with st.expander(f"{title} — {d.get('score')}"):
-                                content = (d.get("content") or "").lstrip()  # 선행 공백 제거
-                                st.text(content)  # 또는 st.write(content) / st.markdown(content) 대신 st.text 사용
+                if not retrieved_docs:
+                    canned = "컴플라이언스 관련 문의에 대해서만 답변을 제공하고 있음을 안내드립니다.\n그 외의 문의사항은 답변이 어려운 점 양해 부탁드립니다."
+                    st.info(canned)
+                    # 모델을 호출하지 않고 고정 응답을 대화 이력에 추가
+                    st.session_state["messages"].append({"role": "assistant", "content": canned})
+                else:
+                    st.subheader(f"검색 결과 ({len(retrieved_docs)})")
+                    for d in retrieved_docs:
+                        title_parts = [p for p in (d.get("domain"), d.get("category")) if p]
+                        title = " | ".join(title_parts) if title_parts else (d.get("category") or "항목")
+                        with st.expander(f"{title} — {d.get('score')}"):
+                            content = (d.get("content") or "").lstrip()  # 선행 공백 제거
+                            st.text(content)  # 또는 st.write(content) / st.markdown(content) 대신 st.text 사용
 
-                        context_text = _build_context_text(retrieved_docs)
-                        messages_for_model = _inject_context_into_messages(st.session_state["messages"], context_text)
+                    context_text = _build_context_text(retrieved_docs)
+                    messages_for_model = _inject_context_into_messages(st.session_state["messages"], context_text)
 
-                        response_text = _stream_response_to_chat(model, messages_for_model)
+                    response_text = _stream_response_to_chat(model, messages_for_model)
+                    # 모델이 생성한 응답을 세션 이력에 저장하여 다음 질문 시 이전 답변이 유지되게 함
+                    try:
+                        if response_text:
+                            st.session_state.setdefault("messages", []).append({"role": "assistant", "content": response_text})
+                    except Exception:
+                        # 세션 저장 실패시 앱은 계속 실행
+                        pass
 
                         
 else:
@@ -444,3 +519,9 @@ else:
                 st.markdown(prompt)
 
             response_text = _stream_response_to_chat(model, st.session_state["messages"])
+            # 일반검색(라그 없음)에서도 모델 응답을 세션 이력에 저장
+            try:
+                if response_text:
+                    st.session_state.setdefault("messages", []).append({"role": "assistant", "content": response_text})
+            except Exception:
+                pass
