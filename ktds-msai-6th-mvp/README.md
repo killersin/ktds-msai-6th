@@ -64,6 +64,7 @@ RAG(Retrieval-Augmented Generation) 기반으로 KT내 컴플라이언스 관련
 - "임직원 보안수준진단사이트 주소 알려줘" → 관련 문서 내 링크/참고 제공
 - "KT가 규정한 산업안전보건 알려줘" → 사내 규정을 정리
 - "점심메뉴 추천" → 업무 범위를 벗어난 요청은 거부 및 가이드 안내
+<p align="left"><img src="assets/mvp6.png" alt="MVP 다이어그램" width="900" /></p>
 
 ```
 📁 프로젝트 실제 파일 구조

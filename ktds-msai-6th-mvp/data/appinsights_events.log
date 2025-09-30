@@ -2,3 +2,7 @@
 2025-09-30T15:24:17 [EVENT] app_stop | {'script': 'app.py', 'reason': 'atexit'}
 2025-09-30T16:12:15 [EVENT] app_start | {'script': 'app.py'}
 2025-09-30T16:12:22 [EVENT] app_start | {'script': 'app.py'}
+2025-09-30T17:27:56 [EVENT] app_stop | {'script': 'app.py', 'reason': 'atexit'}
+2025-09-30T17:28:00 [EVENT] app_stop | {'script': 'app.py', 'reason': 'atexit'}
+2025-09-30T17:29:36 [EVENT] app_start | {'script': 'app.py'}
+2025-09-30T17:29:36 [EVENT] app_stop | {'script': 'app.py', 'reason': 'atexit'}
