@@ -56,7 +56,7 @@
 - 웹 UI: Streamlit
 - 프로그래밍 언어: Python 3.11
 - 클라우드: Microsoft Azure (AI Search, OpenAI, App Service, Blob Storage, Application Insights)
-- 통신/알림: Slack (Incoming Webhooks)
+- 알림: Slack (Incoming Webhooks)
 
 💬 RAG 검색 시나리오 예시 
 -----------------------
