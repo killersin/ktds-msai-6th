@@ -1,24 +1,23 @@
 # 📘 컴플라이언스 AI어시스턴트 (RAG 기반)
-✨ 이 문서는 로컬 개발 및 PoC(Proof of Concept) 배포를 위한 README입니다.
+✨ 이 문서는 PoC(Proof of Concept)를 위한 README입니다.
 
 🎯 프로젝트 개요
 ---------------
-RAG(Retrieval-Augmented Generation) 기반으로 KT내 컴플라이언스 관련 문서 및 최신 뉴스·사례를 검색·요약하여
-직원 질문에 실시간으로 응답하고,  
+컴플라이언스 관련 문서 및 최신 뉴스·사례를 검색·요약하여 직원 질문에 응답하고,  
 요약 결과를 슬랙으로 전송하는 AI 어시스턴트입니다.
 
 > **컴플라이언스**: 기업 내 윤리적·법적·재무적 리스크를 사전에 방지하고 규정을 준수하도록 지원하는 활동
 
 ⚠️ 문제 정의
 ----------------------
-1. 내부 규정이 방대하고 복잡하여 직원이 필요한 정보를 즉시 찾기 어려움
+1. KT의 내부 규정이 방대하고 복잡하여 직원이 필요한 정보를 즉시 찾기 어려움
 2. 컴플라이언스 관련 최신 동향 및 사례 인식 부족
 
    → 인식 제고 필요
 
 ✅ 해결 방안
 -----------
-1) RAG 기반 검색·응답
+1) RAG(Retrieval-Augmented Generation) 기반 검색·응답
  - Azure AI Search로 관련 문서를 검색하고, 검색 결과를 컨텍스트로 Azure OpenAI(GPT-4.1-mini)에 전달하여
       정확하고 근거 있는 응답을 제공
 <p align="left"><img src="assets/mvp4.png" alt="MVP 다이어그램" width="800" /></p>
@@ -110,7 +109,7 @@ Application Insights를 통해 애플리케이션 상태(시작/종료)를 수�
 2) 동작 원리(간단)
 - 앱이 시작될 때 `app_start` 이벤트가 track_event로 전송
 - 프로세스가 SIGTERM 또는 SIGINT를 받으면 `app_stop` 이벤트를 전송
-- Application Insights는 전송된 로그/트레이스/이벤트를 수집하고 Azure Portal의 Logs(또는 Live Metrics)에서 확인
+- Application Insights는 전송된 로그/트레이스/이벤트를 수집하고 Azure Portal의 Logs에서 확인
 
 3) Kusto(Logs) 예제 쿼리
 - `app_stop`만 필터링하여 최근 이벤트를 확인할 때:
